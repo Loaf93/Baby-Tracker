@@ -168,7 +168,6 @@ export class Store {
       headers: {
         Accept: 'application/vnd.github+json',
         Authorization: `Bearer ${s.token}`,
-        'X-GitHub-Api-Version': '2022-11-28',
         ...(opts.body ? { 'Content-Type': 'application/json' } : {}),
         ...(opts.headers || {}),
       },

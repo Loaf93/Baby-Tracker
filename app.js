@@ -678,7 +678,7 @@ function renderDayInsights(view) {
         <div class="stat"><b class="num">${M.fmtDur(st.avgGap)}</b><small>average gap</small></div>
         <div class="stat"><b class="num">${M.fmtDur(st.maxGap)}</b><small>longest gap</small></div>
         <div class="stat wide"><small>Left / right balance${sideTot ? ` · ${Math.round((st.sideL / sideTot) * 100)}% L` : ''}</small>${splitBar([
-          { l: 'Left', v: st.sideL, c: 'var(--feed)' }, { l: 'Right', v: st.sideR, c: 'color-mix(in srgb, var(--feed) 55%, var(--card))' }])}</div>
+          { l: 'Left', v: st.sideL, c: 'var(--feed)' }, { l: 'Right', v: st.sideR, c: 'var(--feed-2)' }])}</div>
       </div></section>
 
     <section class="card"><div class="card-h"><h2>☀️ Wake windows</h2><span class="aside">target ~${S().wakeWindowMin}m</span></div>
@@ -941,6 +941,13 @@ function settingsSheet() {
 
 // ───────────────────────── Render loop ─────────────────────────
 function render() {
+  try { renderInner(); }
+  catch (e) {
+    console.error(e);
+    window.__bdShowError?.('Something went wrong drawing this screen', e, { retry: true });
+  }
+}
+function renderInner() {
   const titles = { today: 'Today', log: 'Log', insights: 'Insights' };
   $('#title').textContent = titles[ui.tab];
   $('#subtitle').textContent = ui.tab === 'today' ? M.fmtDay(Date.now(), { weekday: 'long', day: 'numeric', month: 'long' }) : '';
@@ -1000,4 +1007,5 @@ setInterval(() => { if (document.visibilityState === 'visible') store.sync(); },
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { ui.barMode = null; applyTheme(); render(); store.sync(); } });
 window.addEventListener('online', () => store.sync());
 window.addEventListener('pageshow', () => store.sync());
+window.__bdStarted = true;
 if (!store.configured && !store.all().length) setTimeout(() => toast('Tip: tap ⚙️ to connect GitHub sync', { ms: 5000 }), 1200);
