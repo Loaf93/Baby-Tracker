@@ -101,7 +101,7 @@
     document.getElementById('view').innerHTML = '<div class="boot-error"><h2>This browser is too old</h2>Please update iOS (Settings → General → Software Update) or use a current version of Safari or Chrome.</div>';
   </script>
   <script>
-    if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+    if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => {}));
   </script>
 </body>
 </html>
