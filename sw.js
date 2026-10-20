@@ -2,7 +2,7 @@
 // Strategy: NETWORK-FIRST for every app file (always the latest version when online),
 // falling back to the saved copy only when offline or the network is very slow.
 // Bump VERSION whenever app files change.
-const VERSION = 'v1.2.1';
+const VERSION = 'v1.4.0';
 const CACHE = 'baby-day-' + VERSION;
 const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'store.js', 'model.js',
   'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png'];

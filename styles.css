@@ -270,7 +270,7 @@ body.dark .night-band { background: rgba(255,255,255,.025); }
 .row { display: flex; gap: 8px; align-items: center; }
 .row > * { flex: 1; }
 .btn { padding: 15px; border-radius: 16px; font-weight: 700; font-size: 16px; background: var(--card2); text-align: center; }
-.btn.primary { background: var(--ink); color: var(--bg); }
+.btn.primary { background: var(--primary, var(--ink)); color: var(--on-primary, var(--bg)); }
 .btn.danger { color: var(--over); }
 .btn-row { display: flex; gap: 8px; margin-top: 6px; }
 .btn-row .btn { flex: 1; }
@@ -424,7 +424,7 @@ body.red::after {
    so in the light theme put a dark strip behind the clock/battery. */
 body:not(.dark)::before {
   content: ""; position: fixed; top: 0; left: 0; right: 0; z-index: 40; pointer-events: none;
-  height: env(safe-area-inset-top, 0px); background: #3A322C;
+  height: env(safe-area-inset-top, 0px); background: var(--statusbar, #3A322C);
 }
 
 /* Short screens (iPhone SE / mini with toolbar): keep every button on screen */
@@ -454,3 +454,90 @@ body:not(.dark)::before {
 .boot-error ul { margin: 8px 0; padding-left: 20px; }
 .boot-error button { margin-top: 10px; padding: 12px 16px; border-radius: 14px; background: var(--ink); color: var(--bg); font-weight: 700; }
 .boot-error .small-note { margin-top: 8px; word-break: break-word; }
+
+/* ───────────── v1.3: late-night styles (12am–5am) ─────────────
+   Each sits on top of the dim theme. Overlays don't block taps. */
+body.ns-amber::after, body.ns-dim::after, body.ns-softred::after {
+  content: ""; position: fixed; inset: 0; z-index: 1000; pointer-events: none;
+}
+/* Warm amber: strips most blue light but keeps colours readable */
+body.ns-amber::after { background: #ffb26b; mix-blend-mode: multiply; }
+/* Extra dim: same colours, about 40% darker */
+body.ns-dim::after { background: rgba(0, 0, 0, .42); }
+/* Soft red: red-leaning but keeps some warmth and contrast */
+body.ns-softred::after { background: #ff7a55; mix-blend-mode: multiply; opacity: .9; }
+
+/* ───────────── v1.4: Jazz Club colour scheme ─────────────
+   Tangerine #FF6C34 · Black Cherry #351E28 · Cool Blue #D7EFFF
+   Day: cool-blue room, black-cherry ink, tangerine accents.
+   Night: black-cherry room, cool-blue ink, tangerine accents. */
+body.jazz {
+  --bg: #EAF6FF;
+  --card: #FFFFFF;
+  --card2: #D7EFFF;
+  --ink: #351E28;
+  --ink2: #6A4A59;
+  --muted: #8F7884;
+  --line: #C6E2F5;
+  --track: #DDEFFC;
+  --shadow: 0 1px 2px rgba(53, 30, 40, .07), 0 6px 20px rgba(53, 30, 40, .07);
+  --sleep: #6B3A52;        /* bassinet */
+  --sleep-co: #351E28;     /* co-sleep: Black Cherry */
+  --sleep-ca: #A9789A;     /* carrier */
+  --feed: #FF6C34;         /* Tangerine */
+  --feed-2: #FFB495;
+  --awake: #4E9FD6;        /* deepened Cool Blue */
+  --wee: #F2B23E;
+  --poo: #8A5238;
+  --note: #8F7884;
+  --warn: #E59A2F;
+  --over: #E2452B;
+  --primary: #FF6C34;
+  --on-primary: #351E28;
+  --statusbar: #351E28;
+}
+body.jazz.dark {
+  --bg: #24131B;
+  --card: #351E28;         /* Black Cherry */
+  --card2: #43283A;
+  --ink: #D7EFFF;          /* Cool Blue */
+  --ink2: #A8C3D6;
+  --muted: #8C7584;
+  --line: #4D3141;
+  --track: #2E1A24;
+  --shadow: none;
+  --sleep: #B07A96;
+  --sleep-co: #86506D;
+  --sleep-ca: #D8B2C6;
+  --feed: #FF6C34;
+  --feed-2: #A04A2A;
+  --awake: #8FC8EE;
+  --wee: #E3A93E;
+  --poo: #B27A5A;
+  --note: #8C7584;
+  --warn: #E59A2F;
+  --over: #FF7A52;
+  --primary: #FF6C34;
+  --on-primary: #351E28;
+}
+body.jazz .tab.active { color: var(--ink); background: var(--card2); }
+body.jazz .act.current, body.jazz .choice.rec { box-shadow: 0 0 0 1px var(--c) inset; }
+body.jazz .fab { background: var(--primary); color: var(--on-primary); }
+body.jazz h1 { letter-spacing: -.025em; }
+
+/* ───────────── v1.4: fine-line icons ───────────── */
+.lic { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; vertical-align: -0.16em; flex: none; }
+.lic-pair { display: inline-flex; gap: .08em; }
+.lic-pair .lic { width: .78em; height: .78em; }
+/* In big buttons the icon takes the event colour for a clean, legible look */
+.icons-line .act .ico, .icons-line .nap .ico, .icons-line .choice .ico { color: var(--c); line-height: 1; }
+.icons-line .act .ico { font-size: 34px; }
+.icons-line .act .ico .lic { stroke-width: 1.4; }
+.icons-line .nap .ico { font-size: 24px; }
+.icons-line .nap.both .ico { color: var(--poo); }
+.icons-line .nap.both .ico .lic:first-child { color: var(--wee); }
+.icons-line .nap.note .ico { color: var(--ink2); }
+.icons-line .choice .ico { font-size: 30px; }
+.icons-line .slim-stats .lic, .icons-line .card-h .lic, .icons-line .chip .lic, .icons-line .item .lic { color: var(--ink2); }
+.icons-line .card-h h2 { display: flex; align-items: center; gap: 6px; }
+.icons-line .record .lic { color: var(--sleep); }

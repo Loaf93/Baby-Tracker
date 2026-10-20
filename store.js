@@ -23,7 +23,9 @@ export const DEFAULT_SETTINGS = {
   themeDarkTo: 7,
   backdateFrom: 0,    // "started X min ago" chips shown 12am–8am
   backdateTo: 8,
-  redLight: true,    // red-light mode 12am–5am
+  colourScheme: 'standard', // standard | jazz
+  iconStyle: 'emoji',        // emoji | line
+  nightStyle: 'amber', // late-night style 12am–5am: off | amber | dim | softred | red
   redFrom: 0,
   redTo: 5,
 };
@@ -74,6 +76,7 @@ export class Store {
   constructor({ fetchImpl } = {}) {
     this.fetch = fetchImpl || ((...a) => fetch(...a));
     this.settings = { ...DEFAULT_SETTINGS, ...lsGet(LS_SETTINGS, {}) };
+    if (!this.settings.nightStyle) this.settings.nightStyle = 'amber'; // migrate from the old red-light switch
     this.device = lsGet(LS_DEVICE, null) || (() => { const d = uid(); lsSet(LS_DEVICE, d); return d; })();
     this.map = new Map();
     for (const r of lsGet(LS_RECORDS, [])) this.map.set(r.id, r);

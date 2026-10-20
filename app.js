@@ -11,6 +11,31 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 const S = () => store.settings;
 const recs = () => store.all();
 
+// ───────────────────────── Icons (emoji or fine-line SVG) ─────────────────────────
+const EMOJI = { sleep: '🌙', feed: '🤱', awake: '☀️', wee: '💧', poo: '💩', both: '💧💩', note: '📝',
+  bassinet: '🛏️', cosleep: '🫂', carrier: '🎒', star: '🎉' };
+const LINE = {
+  sleep: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+  awake: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
+  feed: '<path d="M12 20s-7.5-4.6-7.5-10A4.2 4.2 0 0 1 12 7.6 4.2 4.2 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/><path d="M12 10.8c-1.1 1.4-1.7 2.3-1.7 3a1.7 1.7 0 0 0 3.4 0c0-.7-.6-1.6-1.7-3z"/>',
+  wee: '<path d="M12 3.5c-3.3 4.3-5.6 7.5-5.6 10.4a5.6 5.6 0 0 0 11.2 0c0-2.9-2.3-6.1-5.6-10.4z"/><path d="M9.3 14.2a2.8 2.8 0 0 0 2.2 2.6"/>',
+  poo: '<path d="M6 19.5h12a2.2 2.2 0 0 0 0-4.4H6a2.2 2.2 0 0 0 0 4.4z"/><path d="M7.6 15.1a2 2 0 0 1 .2-4h8.4a2 2 0 0 1 .2 4"/><path d="M9.6 11.1a2 2 0 0 1 .4-3.9h1.6A1.6 1.6 0 0 0 13 5.5"/>',
+  note: '<path d="M6 3.5h8.5L18 7v13.5H6z"/><path d="M14.5 3.5V7H18M9 11h6M9 14.5h6M9 18h3.5"/>',
+  bassinet: '<path d="M3.5 10h17M4.5 10v6.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V10M4.5 10a7 7 0 0 1 9-6.6M8 18.5V21M16 18.5V21M8.5 10v8.5M12 10v8.5M15.5 10v8.5"/>',
+  cosleep: '<path d="M3 19.5V7M3 15h18v4.5M3 12.5h18"/><circle cx="7" cy="10.2" r="1.6"/><circle cx="12.5" cy="10.2" r="1.6"/>',
+  carrier: '<path d="M8.5 3v4.5M15.5 3v4.5M7 7.5h10l-1 8.2a4 4 0 0 1-8 0z"/><circle cx="12" cy="11" r="1.8"/>',
+  star: '<path d="M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.8l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>',
+};
+const lineIcons = () => S().iconStyle === 'line';
+/** Icon as HTML (emoji or SVG). */
+function ic(name) {
+  if (!lineIcons()) return EMOJI[name] || '';
+  if (name === 'both') return `<span class="lic-pair">${ic('wee')}${ic('poo')}</span>`;
+  return `<svg class="lic" viewBox="0 0 24 24" aria-hidden="true">${LINE[name] || ''}</svg>`;
+}
+/** Icon prefix for plain-text places (toasts): emoji, or nothing in line mode. */
+const tx = name => (lineIcons() ? '' : (EMOJI[name] || '') + ' ');
+
 const TYPES = {
   sleep: { label: 'Sleep', ico: '🌙', color: 'var(--sleep)', verb: 'Asleep' },
   feed: { label: 'Feed', ico: '🤱', color: 'var(--feed)', verb: 'Feeding' },
@@ -38,15 +63,26 @@ const ui = {
 };
 
 // ───────────────────────── Theme ─────────────────────────
+const NIGHT_STYLES = [
+  { v: 'off', label: 'Off — normal dim theme' },
+  { v: 'amber', label: 'Warm amber (like Night Shift)' },
+  { v: 'dim', label: 'Extra dim' },
+  { v: 'softred', label: 'Soft red' },
+  { v: 'red', label: 'Full red' },
+];
 const inHours = (h, from, to) => (from === to ? false : from < to ? h >= from && h < to : h >= from || h < to);
 function applyTheme() {
   const s = S();
   const h = new Date().getHours();
   const dark = s.themeMode === 'dark' || (s.themeMode === 'auto' && inHours(h, s.themeDarkFrom, s.themeDarkTo));
-  const red = s.redLight && inHours(h, s.redFrom, s.redTo);
-  document.body.classList.toggle('dark', dark || red);
-  document.body.classList.toggle('red', red);
-  $('#themeColor').setAttribute('content', dark || red ? '#120F0D' : '#FBF7F2');
+  const style = ui.previewNight || (s.nightStyle !== 'off' && inHours(h, s.redFrom, s.redTo) ? s.nightStyle : null);
+  const night = !!style && style !== 'off';
+  document.body.classList.toggle('dark', dark || night);
+  for (const k of NIGHT_STYLES) document.body.classList.toggle('ns-' + k.v, style === k.v);
+  document.body.classList.toggle('red', style === 'red');
+  document.body.classList.toggle('jazz', s.colourScheme === 'jazz');
+  document.body.classList.toggle('icons-line', s.iconStyle === 'line');
+  $('#themeColor').setAttribute('content', getComputedStyle(document.body).getPropertyValue('--bg').trim() || '#FBF7F2');
 }
 
 function pulse(key) { ui.pulse = { key, t: Date.now() }; }
@@ -85,7 +121,7 @@ function startState(type, v, offsetMin = 0) {
   const open = recs().filter(r => r.kind === 'state' && r.end == null);
   const t = TYPES[type];
   pulse('now');
-  withUndo(`${t.ico} ${t.label} started${offsetMin ? ` ${offsetMin}m ago` : ''}`, () => {
+  withUndo(`${tx(type)}${t.label} started${offsetMin ? ` ${offsetMin}m ago` : ''}`, () => {
     for (const r of open) {
       if (r.start >= at) store.put({ ...r, deleted: true }); // superseded by a back-dated start
       else store.put({ ...r, end: at });
@@ -109,7 +145,7 @@ function switchPart(seg, v) {
 function logNappy(type) {
   const n = NAPPY[type];
   pulse('nap-' + type);
-  withUndo(`${n.ico} ${n.label} logged`, () => store.put({ kind: 'nappy', type, at: Date.now() }));
+  withUndo(`${tx(type)}${n.label} logged`, () => store.put({ kind: 'nappy', type, at: Date.now() }));
 }
 
 // ───────────────────────── Toast / tooltip ─────────────────────────
@@ -300,17 +336,17 @@ function barCardHTML(all, now) {
     const a = M.atHour(M.addDays(today, -1), s.nightStart), b = M.atHour(today, s.nightEnd);
     const rs = rangeStats(all, a, b, now);
     bar = simsBar(a, { b, now });
-    summary = `<span>🌙 <b class="num">${M.fmtDur(rs.sleep, { short: true })}</b> asleep</span><span>longest <b class="num">${M.fmtDur(rs.longest, { short: true })}</b></span><span>🤱 <b class="num">${rs.feeds}</b></span>`;
+    summary = `<span>${ic('sleep')} <b class="num">${M.fmtDur(rs.sleep, { short: true })}</b> asleep</span><span>longest <b class="num">${M.fmtDur(rs.longest, { short: true })}</b></span><span>${ic('feed')} <b class="num">${rs.feeds}</b></span>`;
   } else {
     const st = M.dayStats(all, today, s, now);
     bar = simsBar(today, { now });
-    summary = `<span>🌙 <b class="num">${M.fmtDur(st.sleep, { short: true })}</b></span><span>🤱 <b class="num">${st.feeds}</b></span><span>💧 <b class="num">${st.wees}</b></span><span>💩 <b class="num">${st.poos}</b></span>`;
+    summary = `<span>${ic('sleep')} <b class="num">${M.fmtDur(st.sleep, { short: true })}</b></span><span>${ic('feed')} <b class="num">${st.feeds}</b></span><span>${ic('wee')} <b class="num">${st.wees}</b></span><span>${ic('poo')} <b class="num">${st.poos}</b></span>`;
   }
   const toggle = nightRelevant
     ? `<div class="mini-seg">${[['tonight', `Tonight`], ['today', 'Today']].map(([k, l]) => `<button data-bar="${k}" class="${mode === k ? 'on' : ''}">${l}</button>`).join('')}</div>`
     : '';
   const rec = M.sleepRecord(all, now);
-  const record = rec?.isNew ? `<div class="record">🎉 Longest sleep yet · <b class="num">${M.fmtDur(rec.len)}</b> <span>(was ${M.fmtDur(rec.prevLen)})</span></div>` : '';
+  const record = rec?.isNew ? `<div class="record">${ic('star')} Longest sleep yet · <b class="num">${M.fmtDur(rec.len)}</b> <span>(was ${M.fmtDur(rec.prevLen)})</span></div>` : '';
   return `<section class="card bar-card">
     ${toggle}${bar}
     ${ui.showLegend ? legend() : ''}
@@ -329,11 +365,11 @@ function renderToday() {
     ${nowCardHTML(all, now)}
     <div class="thumb">
       <div class="actions">
-        ${Object.entries(TYPES).map(([k, t]) => `<button class="act ${k}${cur?.type === k ? ' current' : ''}${cur?.type === k ? pulsing('now') : ''}" data-act="${k}"><span class="ico">${t.ico}</span><span>${t.label}</span></button>`).join('')}
+        ${Object.entries(TYPES).map(([k, t]) => `<button class="act ${k}${cur?.type === k ? ' current' : ''}${cur?.type === k ? pulsing('now') : ''}" data-act="${k}"><span class="ico">${ic(k)}</span><span>${t.label}</span></button>`).join('')}
       </div>
       <div class="nappies">
-        ${['wee', 'poo', 'both'].map(k => `<button class="nap ${k}${pulsing('nap-' + k)}" data-nappy="${k}"><span class="ico">${NAPPY[k].ico}</span>${NAPPY[k].short || NAPPY[k].label}</button>`).join('')}
-        <button class="nap note" data-note><span class="ico">📝</span>Note</button>
+        ${['wee', 'poo', 'both'].map(k => `<button class="nap ${k}${pulsing('nap-' + k)}" data-nappy="${k}"><span class="ico">${ic(k)}</span>${NAPPY[k].short || NAPPY[k].label}</button>`).join('')}
+        <button class="nap note" data-note><span class="ico">${ic('note')}</span>Note</button>
       </div>
     </div>`;
   $$('[data-act]', view).forEach(b => (b.onclick = () => onAction(b.dataset.act)));
@@ -356,7 +392,7 @@ function onAction(type) {
   const cur = M.currentSegment(recs());
   const night = inBackdateHours();
   if (cur?.type === type) {
-    if (type === 'awake') return toast('Already awake ☀️');
+    if (type === 'awake') return toast('Already awake');
     return startSheet(type, { switching: cur });
   }
   if (type === 'awake' && !night) return startState('awake');
@@ -423,19 +459,19 @@ function startSheet(type, { night = false, switching = null } = {}) {
     const rec = switching ? null : M.lastPlace(all);
     const curV = switching ? M.subIntervals(switching).at(-1)?.v : null;
     choices = `<div class="label-sm">Where?</div><div class="big-choices cols-3">${M.PLACES.map(p =>
-      `<button class="choice${p.v === rec ? ' rec' : ''}" style="--c:${PLACE_COLOR[p.v]}" data-v="${p.v}"><span class="ico">${p.v === 'bassinet' ? '🛏️' : p.v === 'cosleep' ? '🫂' : '🎒'}</span>${p.label}${p.v === rec ? '<small>last used</small>' : p.v === curV ? '<small>current</small>' : '<small>&nbsp;</small>'}</button>`).join('')}</div>`;
+      `<button class="choice${p.v === rec ? ' rec' : ''}" style="--c:${PLACE_COLOR[p.v]}" data-v="${p.v}"><span class="ico">${ic(p.v)}</span>${p.label}${p.v === rec ? '<small>last used</small>' : p.v === curV ? '<small>current</small>' : '<small>&nbsp;</small>'}</button>`).join('')}</div>`;
   } else if (type === 'feed') {
     const fi = M.feedSideInfo(all);
     const curV = switching ? M.subIntervals(switching).at(-1)?.v : null;
     choices = `<div class="label-sm">Which side?</div><div class="big-choices cols-2">${['L', 'R'].map(sd =>
       `<button class="choice xl${!switching && sd === fi.next ? ' rec' : ''}" style="--c:var(--feed)" data-v="${sd}">${sd}<small>${!switching && sd === fi.next ? 'suggested next' : sd === curV ? 'current' : SIDE_LABEL[sd]}</small></button>`).join('')}</div>`;
   } else {
-    choices = `<div class="big-choices"><button class="choice" style="--c:var(--awake)" data-v=""><span class="ico">☀️</span>Start awake</button></div>`;
+    choices = `<div class="big-choices"><button class="choice" style="--c:var(--awake)" data-v=""><span class="ico">${ic('awake')}</span>Start awake</button></div>`;
   }
   const chips = night && !switching
     ? `<div class="label-sm">Started</div><div class="chips">${OFFSETS.map(o => `<button class="chip${o === 0 ? ' on' : ''}" data-off="${o}">${o ? o + ' min ago' : 'Now'}</button>`).join('')}</div>`
     : '';
-  const title = switching ? (type === 'feed' ? 'Switch side' : 'Move baby') : `${t.ico} ${t.label}`;
+  const title = switching ? (type === 'feed' ? 'Switch side' : 'Move baby') : `${ic(type)} ${t.label}`;
   openSheet(`<h3>${title}</h3>${night && !switching ? '<p class="hint">Forgot to tap? Pick when it really started.</p>' : '<p class="hint">&nbsp;</p>'}${chips}${choices}
     <div class="btn-row"><button class="btn" data-close>Cancel</button></div>`, el => {
     $$('[data-off]', el).forEach(c => (c.onclick = () => { off = +c.dataset.off; $$('[data-off]', el).forEach(x => x.classList.toggle('on', x === c)); }));
@@ -448,7 +484,7 @@ function startSheet(type, { night = false, switching = null } = {}) {
 }
 
 function noteSheet(rec = null) {
-  openSheet(`<h3>📝 ${rec ? 'Edit note' : 'Note'}</h3><p class="hint">e.g. "vaccinations today", "fussy evening"</p>
+  openSheet(`<h3>${ic('note')} ${rec ? 'Edit note' : 'Note'}</h3><p class="hint">e.g. "vaccinations today", "fussy evening"</p>
     <div class="form"><label class="field"><textarea id="noteText" placeholder="Write a note…">${esc(rec?.text || '')}</textarea></label>
     <div class="btn-row"><button class="btn" data-close>Cancel</button><button class="btn primary" id="noteSave">Save</button></div></div>`, el => {
     const ta = $('#noteText', el);
@@ -458,7 +494,7 @@ function noteSheet(rec = null) {
       if (!text) return closeSheet();
       store.put(rec ? { ...rec, text } : { kind: 'note', text, at: Date.now() });
       closeSheet();
-      toast('📝 Note saved');
+      toast(`${tx('note')}Note saved`);
     };
   });
 }
@@ -493,13 +529,13 @@ function renderLog() {
       dur: seg.open ? `<span data-t0="${seg.start}">${M.fmtDur(now - seg.start)}</span>` : M.fmtDur(seg.end - seg.start) });
   }
   if (ui.logFilter === 'all' || ui.logFilter === 'nappy')
-    for (const n of M.events(all, 'nappy', a, b)) items.push({ t: n.at, id: n.id, c: NAPPY[n.type].color, title: `${NAPPY[n.type].ico} ${NAPPY[n.type].label}`, sub: M.fmtTime(n.at), dur: '' });
+    for (const n of M.events(all, 'nappy', a, b)) items.push({ t: n.at, id: n.id, c: NAPPY[n.type].color, title: `${ic(n.type)} ${NAPPY[n.type].label}`, sub: M.fmtTime(n.at), dur: '' });
   if (ui.logFilter === 'all' || ui.logFilter === 'note')
-    for (const n of M.events(all, 'note', a, b)) items.push({ t: n.at, id: n.id, c: 'var(--note)', title: `📝 ${esc(n.text)}`, sub: M.fmtTime(n.at) + (n.who ? ` · ${esc(n.who)}` : ''), dur: '' });
+    for (const n of M.events(all, 'note', a, b)) items.push({ t: n.at, id: n.id, c: 'var(--note)', title: `${ic('note')} ${esc(n.text)}`, sub: M.fmtTime(n.at) + (n.who ? ` · ${esc(n.who)}` : ''), dur: '' });
   items.sort((x, y) => y.t - x.t);
 
   const nav = dayNav(a, d => { ui.logDay = d; render(); });
-  const filters = [['all', 'All'], ['sleep', '🌙 Sleep'], ['feed', '🤱 Feed'], ['awake', '☀️ Awake'], ['nappy', '💧 Nappy'], ['note', '📝 Note']];
+  const filters = [['all', 'All'], ['sleep', `${ic('sleep')} Sleep`], ['feed', `${ic('feed')} Feed`], ['awake', `${ic('awake')} Awake`], ['nappy', `${ic('wee')} Nappy`], ['note', `${ic('note')} Note`]];
   const view = $('#view');
   view.innerHTML = `${nav.html}
     <div class="filters">${filters.map(([k, l]) => `<button class="chip${ui.logFilter === k ? ' on' : ''}" data-f="${k}">${l}</button>`).join('')}</div>
@@ -520,11 +556,11 @@ const fromLocalInput = s => (s ? new Date(s).getTime() : null);
 const toTimeInput = ms => { const d = new Date(ms); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 
 function addSheet() {
-  const kinds = [['sleep', '🌙', 'Sleep', 'var(--sleep)'], ['feed', '🤱', 'Feed', 'var(--feed)'], ['awake', '☀️', 'Awake', 'var(--awake)'],
-    ['wee', '💧', 'Wee', 'var(--wee)'], ['poo', '💩', 'Poo', 'var(--poo)'], ['both', '💧💩', 'Both', 'var(--poo)']];
+  const kinds = [['sleep', ic('sleep'), 'Sleep', 'var(--sleep)'], ['feed', ic('feed'), 'Feed', 'var(--feed)'], ['awake', ic('awake'), 'Awake', 'var(--awake)'],
+    ['wee', ic('wee'), 'Wee', 'var(--wee)'], ['poo', ic('poo'), 'Poo', 'var(--poo)'], ['both', ic('both'), 'Both', 'var(--poo)']];
   openSheet(`<h3>Add an entry</h3><p class="hint">For something you forgot to log.</p>
     <div class="big-choices cols-3">${kinds.map(([k, i, l, c]) => `<button class="choice" style="--c:${c}" data-k="${k}"><span class="ico">${i}</span>${l}</button>`).join('')}</div>
-    <div class="btn-row" style="margin-top:12px"><button class="btn" data-k="note">📝 Note</button><button class="btn" data-close>Cancel</button></div>`, el => {
+    <div class="btn-row" style="margin-top:12px"><button class="btn" data-k="note">${ic('note')} Note</button><button class="btn" data-close>Cancel</button></div>`, el => {
     $$('[data-k]', el).forEach(b => (b.onclick = () => {
       const k = b.dataset.k;
       const base = ui.tab === 'log' && ui.logDay !== M.dayStart(Date.now()) ? M.atHour(ui.logDay, 12) : Date.now();
@@ -661,7 +697,7 @@ function renderDayInsights(view) {
   view.innerHTML += `${nav.html}
     <section class="card">${simsBar(a, { now })}${legend()}</section>
 
-    <section class="card"><div class="card-h"><h2>🌙 Sleep</h2><span class="aside">night = ${hourLabel(S().nightStart)}–${hourLabel(S().nightEnd)}</span></div>
+    <section class="card"><div class="card-h"><h2>${ic('sleep')} Sleep</h2><span class="aside">night = ${hourLabel(S().nightStart)}–${hourLabel(S().nightEnd)}</span></div>
       <div class="stats">
         <div class="stat"><b class="num">${M.fmtDur(st.sleep)}</b><small>total sleep</small></div>
         <div class="stat"><b class="num">${M.fmtDur(st.longest)}</b><small>longest stretch${st.longestBlock ? ` · ${M.fmtTime(st.longestBlock.start)}` : ''}</small></div>
@@ -671,7 +707,7 @@ function renderDayInsights(view) {
           { l: 'Bassinet', v: st.place.bassinet, c: 'var(--sleep)' }, { l: 'Co-sleep', v: st.place.cosleep, c: 'var(--sleep-co)' }, { l: 'Carrier', v: st.place.carrier, c: 'var(--sleep-ca)' }])}</div>
       </div></section>
 
-    <section class="card"><div class="card-h"><h2>🤱 Feeds</h2><span class="aside">gaps measured start → start</span></div>
+    <section class="card"><div class="card-h"><h2>${ic('feed')} Feeds</h2><span class="aside">gaps measured start → start</span></div>
       <div class="stats">
         <div class="stat"><b class="num">${st.feeds}</b><small>feeds · ${M.fmtDur(st.feed)} total</small></div>
         <div class="stat"><b class="num">${M.fmtDur(st.avgFeed)}</b><small>average feed</small></div>
@@ -681,7 +717,7 @@ function renderDayInsights(view) {
           { l: 'Left', v: st.sideL, c: 'var(--feed)' }, { l: 'Right', v: st.sideR, c: 'var(--feed-2)' }])}</div>
       </div></section>
 
-    <section class="card"><div class="card-h"><h2>☀️ Wake windows</h2><span class="aside">target ~${S().wakeWindowMin}m</span></div>
+    <section class="card"><div class="card-h"><h2>${ic('awake')} Wake windows</h2><span class="aside">target ~${S().wakeWindowMin}m</span></div>
       <div class="stats">
         <div class="stat"><b class="num">${M.fmtDur(st.avgWake)}</b><small>average window</small></div>
         <div class="stat"><b class="num">${M.fmtDur(st.maxWake)}</b><small>longest window</small></div>
@@ -689,13 +725,13 @@ function renderDayInsights(view) {
         <div class="stat"><b class="num">${st.wakeCount}</b><small>windows completed</small></div>
       </div></section>
 
-    <section class="card"><div class="card-h"><h2>💧 Nappies</h2></div>
+    <section class="card"><div class="card-h"><h2>${ic('wee')} Nappies</h2></div>
       <div class="stats">
         <div class="stat"><b class="num">${st.wees}</b><small>wet</small></div>
         <div class="stat"><b class="num">${st.poos}</b><small>dirty</small></div>
       </div></section>
 
-    ${st.notes.length ? `<section class="card"><div class="card-h"><h2>📝 Notes</h2></div><div class="notes-list">${st.notes.map(n => `<div class="note-item"><small>${M.fmtTime(n.at)}${n.who ? ' · ' + esc(n.who) : ''}</small>${esc(n.text)}</div>`).join('')}</div></section>` : ''}
+    ${st.notes.length ? `<section class="card"><div class="card-h"><h2>${ic('note')} Notes</h2></div><div class="notes-list">${st.notes.map(n => `<div class="note-item"><small>${M.fmtTime(n.at)}${n.who ? ' · ' + esc(n.who) : ''}</small>${esc(n.text)}</div>`).join('')}</div></section>` : ''}
     <button class="btn" style="width:100%" id="csvBtn">Export this day (CSV)</button>`;
   nav.bind(view);
   $('#csvBtn').onclick = () => exportCSV(a, M.addDays(a, 1));
@@ -769,7 +805,7 @@ function renderRangeInsights(view, n) {
   const av = f => (base.length ? base.reduce((x, s) => x + (f(s) ?? 0), 0) / base.length : null);
   const avN = f => { const v = base.map(f).filter(x => x != null); return v.length ? v.reduce((x, y) => x + y, 0) / v.length : null; };
 
-  const hl = [['all', 'All'], ['sleep', '🌙 Sleep'], ['feed', '🤱 Feed'], ['awake', '☀️ Awake'], ['nappy', '💧 Nappies']];
+  const hl = [['all', 'All'], ['sleep', `${ic('sleep')} Sleep`], ['feed', `${ic('feed')} Feed`], ['awake', `${ic('awake')} Awake`], ['nappy', `${ic('wee')} Nappies`]];
   const rows = days.map(d => {
     const lab = d === today ? 'Today' : M.fmtDay(d, { weekday: 'short' });
     return `<button class="dl rowbtn${d === today ? ' today' : ''}" data-day="${d}"><b>${lab}</b>${M.fmtDay(d, { day: 'numeric', month: 'short' })}</button><div>${simsBar(d, { compact: true, axis: false, highlight: ui.insHighlight, now, nightBands: false })}</div>`;
@@ -891,11 +927,21 @@ function settingsSheet() {
           <label class="field"><span>Night sleep from</span><select id="sNs">${hours.map(h => `<option value="${h}" ${h === s.nightStart ? 'selected' : ''}>${hourLabel(h)}</option>`).join('')}</select></label>
           <label class="field"><span>until</span><select id="sNe">${hours.map(h => `<option value="${h}" ${h === s.nightEnd ? 'selected' : ''}>${hourLabel(h)}</option>`).join('')}</select></label>
         </div>
+        <div class="row">
+          <label class="field"><span>Colour scheme</span><select id="sScheme">
+            <option value="standard" ${s.colourScheme !== 'jazz' ? 'selected' : ''}>Standard</option>
+            <option value="jazz" ${s.colourScheme === 'jazz' ? 'selected' : ''}>Jazz Club</option></select></label>
+          <label class="field"><span>Icons</span><select id="sIcons">
+            <option value="emoji" ${s.iconStyle !== 'line' ? 'selected' : ''}>Emoji</option>
+            <option value="line" ${s.iconStyle === 'line' ? 'selected' : ''}>Fine line</option></select></label>
+        </div>
         <label class="field"><span>Theme</span><select id="sTheme">
           <option value="auto" ${s.themeMode === 'auto' ? 'selected' : ''}>Auto (dim 7pm–7am)</option>
           <option value="light" ${s.themeMode === 'light' ? 'selected' : ''}>Always light</option>
           <option value="dark" ${s.themeMode === 'dark' ? 'selected' : ''}>Always dim</option></select></label>
-        <label class="check"><input type="checkbox" id="sRed" ${s.redLight ? 'checked' : ''}> Red-light mode 12am–5am <span class="small-note">(gentlest on eyes at night)</span></label>
+        <label class="field"><span>Late-night style (${hourLabel(s.redFrom)}–${hourLabel(s.redTo)})</span><select id="sNight">
+          ${NIGHT_STYLES.map(o => `<option value="${o.v}" ${s.nightStyle === o.v ? 'selected' : ''}>${o.label}</option>`).join('')}</select></label>
+        <p class="small-note" style="margin-top:-6px">Choosing a style previews it for a few seconds.</p>
         <div class="btn-row"><button class="btn primary" id="savePrefs">Save preferences</button></div>
       </div>
     </div>
@@ -921,13 +967,21 @@ function settingsSheet() {
       try { await navigator.clipboard.writeText(code); toast('Setup code copied'); }
       catch { $('#sCode', el).value = code; $('#sCode', el).select(); toast('Select & copy the code above'); }
     };
+    // colour scheme & icons apply (and save) instantly
+    $('#sScheme', el).onchange = e => { store.saveSettings({ colourScheme: e.target.value }); applyTheme(); render(); };
+    $('#sIcons', el).onchange = e => { store.saveSettings({ iconStyle: e.target.value }); applyTheme(); render(); };
+    $('#sNight', el).onchange = e => {
+      ui.previewNight = e.target.value; applyTheme();
+      clearTimeout(ui.previewTimer);
+      ui.previewTimer = setTimeout(() => { ui.previewNight = null; applyTheme(); }, 4000);
+    };
     $('#savePrefs', el).onclick = () => {
       store.saveSettings({
         who: $('#sWho', el).value.trim(),
         wakeWindowMin: Math.max(20, Math.min(360, +$('#sWake', el).value || DEFAULT_SETTINGS.wakeWindowMin)),
         nightStart: +$('#sNs', el).value, nightEnd: +$('#sNe', el).value,
         themeMode: $('#sTheme', el).value,
-        redLight: $('#sRed', el).checked,
+        nightStyle: $('#sNight', el).value,
       });
       applyTheme(); render(); toast('Preferences saved');
     };
@@ -1008,4 +1062,4 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 window.addEventListener('online', () => store.sync());
 window.addEventListener('pageshow', () => store.sync());
 window.__bdStarted = true;
-if (!store.configured && !store.all().length) setTimeout(() => toast('Tip: tap ⚙️ to connect GitHub sync', { ms: 5000 }), 1200);
+if (!store.configured && !store.all().length) setTimeout(() => toast('Tip: open Settings (cog, top right) to connect sync', { ms: 5000 }), 1200);

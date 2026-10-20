@@ -63,8 +63,9 @@ baby-data     (PRIVATE repo)                  holds the data: data/2026-10.json,
 | **Tonight view** | Between 12am and 8am the bar shows **Tonight (8pm–8am)** so the whole night is visible, with sleep so far, longest stretch and feeds. Tap **Today** to switch back. |
 | **Predictions** | "Next ~1:40am · R side" uses the usual gap between feed starts *at this time of day* (night gaps are longer), from the last few days. While awake, the wake-window bar shows **Sleep due ~3:15pm**. Tap a chip to see how it was worked out. |
 | **Records** | A 🎉 note appears when baby has just had their longest sleep yet. |
+| **Look & feel** | ⚙️ Settings → **Colour scheme**: *Standard* or *Jazz Club* (Tangerine, Black Cherry, Cool Blue), and **Icons**: *Emoji* or *Fine line*. Both change instantly and are saved per phone. |
 | **Colour key** | Tap **?** under the bar to show or hide the legend. |
-| **Night theme** | Dims automatically from 7pm to 7am. **Red-light mode** (12am–5am, on by default, switch off in Settings) turns the whole screen red, which is gentlest on dark-adapted eyes. |
+| **Night theme** | Dims automatically from 7pm to 7am. From 12am to 5am a **late-night style** applies: Warm amber (default), Extra dim, Soft red, Full red, or Off. Change it in ⚙️ Settings; picking one previews it for 4 seconds. |
 | **Log tab** | Tap any entry to edit times, sides or places, or to delete it. **＋ Add** is for anything you missed. |
 | **Insights** | *Trends* (7/14/30 days): line charts of longest stretch, night sleep, total sleep and feeds per day, with the best day marked. *Day*: totals, longest stretch, night vs day sleep (8pm–8am), naps, sleep places, feed count, average and longest gap (start→start), L/R balance, wake windows, nappies, notes. *7 / 14 / 30 days*: stacked Sims bars, highlight filter, daily averages, and a sortable by-day table. Tap a date to open that day. |
 | **Export** | CSV for a day, a range, or everything, via the iPhone share sheet. |
