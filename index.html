@@ -11,8 +11,8 @@
   <meta name="theme-color" content="#FBF7F2" id="themeColor">
   <meta name="format-detection" content="telephone=no">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="apple-touch-icon" href="icons/icon-180.png">
-  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="icon" type="image/png" href="icon-192.png">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -48,7 +48,58 @@
   <div id="toast" class="toast" hidden></div>
   <div id="tip" class="tip" hidden></div>
 
-  <script type="module" src="js/app.js"></script>
+  <script>
+    // ── Compatibility for older iPhones (iOS 15.0–15.3) ──
+    if (!Array.prototype.at) Object.defineProperty(Array.prototype, 'at', { configurable: true, writable: true,
+      value: function (n) { n = Math.trunc(n) || 0; if (n < 0) n += this.length; return this[n]; } });
+
+    // ── Safety net: if the app can't start, explain why instead of showing a blank screen ──
+    (function () {
+      var FILES = ['app.js', 'model.js', 'store.js', 'styles.css'];
+      var shown = false;
+      function esc(t) { return String(t).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
+      function panel(html) {
+        var v = document.getElementById('view');
+        if (!v) return;
+        v.innerHTML = '<div class="boot-error">' + html + '<br><button onclick="location.reload()">Reload</button></div>';
+      }
+      window.__bdShowError = function (title, err, opts) {
+        var msg = err && (err.stack || err.message) || String(err || '');
+        panel('<h2>' + esc(title) + '</h2>Your data is safe. Try Reload. If this keeps happening, send a screenshot of this message.' +
+          '<div class="small-note"><code>' + esc(msg).slice(0, 600) + '</code></div>');
+      };
+      function diagnose(reason) {
+        if (shown || window.__bdStarted) return;
+        shown = true;
+        if (location.protocol === 'file:') {
+          panel('<h2>Open this from the web address, not the file</h2>The app has to be opened from your GitHub Pages address (https://…github.io/baby-tracker/), not by double-clicking index.html.');
+          return;
+        }
+        Promise.all(FILES.map(function (f) {
+          return fetch(f + '?check=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? null : f; }).catch(function () { return f; });
+        })).then(function (missing) {
+          missing = missing.filter(Boolean);
+          if (missing.length) {
+            panel('<h2>Some app files are missing</h2>The page loaded, but these files are not on your website:' +
+              '<ul>' + missing.map(function (f) { return '<li><code>' + f + '</code></li>'; }).join('') + '</ul>' +
+              'All the app files must sit together at the top level of your GitHub repo (no folders). ' +
+              'Upload the missing ones with <b>Add file → Upload files</b>, commit, wait 1–2 minutes, then reload.');
+          } else {
+            window.__bdShowError('The app couldn’t start', reason || 'Unknown error during startup');
+          }
+        });
+      }
+      window.__bdDiagnose = diagnose;
+      var lastErr = null;
+      window.addEventListener('error', function (e) { if (!window.__bdStarted) lastErr = e.error || e.message; }, true);
+      window.addEventListener('unhandledrejection', function (e) { if (!window.__bdStarted) lastErr = e.reason; });
+      window.addEventListener('load', function () { setTimeout(function () { if (!window.__bdStarted) diagnose(lastErr); }, 2500); });
+    })();
+  </script>
+  <script type="module" src="app.js" onerror="window.__bdDiagnose && window.__bdDiagnose('Could not load app.js')"></script>
+  <script nomodule>
+    document.getElementById('view').innerHTML = '<div class="boot-error"><h2>This browser is too old</h2>Please update iOS (Settings → General → Software Update) or use a current version of Safari or Chrome.</div>';
+  </script>
   <script>
     if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
   </script>

@@ -1,8 +1,8 @@
 // App-shell cache. Bump VERSION when you change any app file so phones pick it up.
-const VERSION = 'v1.1.0';
+const VERSION = 'v1.2.0';
 const CACHE = 'baby-day-' + VERSION;
-const SHELL = ['./', 'index.html', 'styles.css', 'js/app.js', 'js/store.js', 'js/model.js',
-  'manifest.webmanifest', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png'];
+const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'store.js', 'model.js',
+  'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

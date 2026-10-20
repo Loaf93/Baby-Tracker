@@ -19,7 +19,7 @@ baby-data     (PRIVATE repo)                  holds the data: data/2026-10.json,
 ## 2. Create the app repo and turn on GitHub Pages (5 min)
 
 1. **+ → New repository**. Name: `baby-tracker`. Select **Public**. Tick **Add a README file**. Click **Create**.
-2. In the new repo, click **Add file → Upload files**. Drag in **everything inside** the unzipped `baby-tracker` folder: `index.html`, `styles.css`, `sw.js`, `manifest.webmanifest`, and the `js/` and `icons/` folders. Click **Commit changes**.
+2. In the new repo, click **Add file → Upload files**. Open the unzipped `baby-tracker` folder, select **all 12 files** in it (Cmd+A / Ctrl+A) and drag them in. There are no sub-folders: every file sits at the top level. Click **Commit changes**.
 3. Go to **Settings → Pages**. Under *Build and deployment*, set Source to **Deploy from a branch**, Branch to **main**, folder **/ (root)**. Click **Save**.
 4. After about a minute the app is live at `https://YOUR-USERNAME.github.io/baby-tracker/`
 
@@ -71,7 +71,7 @@ baby-data     (PRIVATE repo)                  holds the data: data/2026-10.json,
 | **Sync** | On open, after every tap, and every 30 s while open. Works offline and catches up later. The dot next to ⚙️ shows status: green = synced, amber = syncing, red = error, hollow = local only. |
 
 ## Updating the app later
-Edit or re-upload files in the `baby-tracker` repo, and change `VERSION` in `sw.js` (e.g. `v1.0.1`) so phones fetch the new version. Close and reopen the app twice to pick it up.
+Upload all the files again (they replace the old ones), and change `VERSION` in `sw.js` (e.g. `v1.0.1`) so phones fetch the new version. Close and reopen the app twice to pick it up.
 
 ## Privacy & safety
 - The token is stored only on each phone, and it can only read and write `baby-data`.
